@@ -38,6 +38,37 @@ export async function sendTelegramAudio(options: {
   }
 }
 
+export async function sendTelegramVideo(options: {
+  filePath: string;
+  filename: string;
+  caption: string;
+}): Promise<void> {
+  const token = env("TELEGRAM_BOT_TOKEN");
+  const chatId = env("TELEGRAM_CHAT_ID");
+  if (!token || !chatId) throw new Error("Telegram is not connected.");
+  const bytes = await readFile(options.filePath);
+  const form = new FormData();
+  form.set("chat_id", chatId);
+  form.set("caption", options.caption.slice(0, 1000));
+  form.set("supports_streaming", "true");
+  form.set(
+    "video",
+    new Blob([bytes], { type: "video/mp4" }),
+    options.filename,
+  );
+  const response = await fetch(
+    `https://api.telegram.org/bot${token}/sendVideo`,
+    { method: "POST", body: form },
+  );
+  const json = (await response.json()) as {
+    ok?: boolean;
+    description?: string;
+  };
+  if (!response.ok || !json.ok) {
+    throw new Error(json.description || `Telegram rejected the video (${response.status}).`);
+  }
+}
+
 export async function sendTelegramMessage(text: string): Promise<void> {
   const token = env("TELEGRAM_BOT_TOKEN");
   const chatId = env("TELEGRAM_CHAT_ID");

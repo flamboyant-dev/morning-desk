@@ -12,6 +12,7 @@ import {
   writeDriveJson,
 } from "@/lib/drive";
 import { isGitHubActions, isVercel } from "@/lib/env";
+import { telegramConfigured } from "@/lib/telegram";
 import { WINDOW_LABEL } from "@/lib/time";
 import {
   DEFAULT_CONFIG,
@@ -19,7 +20,6 @@ import {
   type DeskConfig,
   type Recording,
 } from "@/lib/types";
-import { telegramConfigured } from "@/lib/telegram";
 import { githubDispatchConfigured } from "@/lib/github";
 
 export const dataDir = path.join(process.cwd(), "data");
@@ -102,11 +102,12 @@ export async function saveRecordings(recordings: Recording[]): Promise<void> {
     await writeDriveJson("recordings.json", clean);
     return;
   }
-  if (isVercel() || isGitHubActions()) {
+  if (isVercel() || (isGitHubActions() && !telegramConfigured())) {
     throw new Error(
       "Connect Google Drive before storing recordings. A normal Gmail folder needs your own login, not a service account.",
     );
   }
+  if (isGitHubActions()) return;
   await mkdir(dataDir, { recursive: true });
   await writeFile(recordingsPath, JSON.stringify(clean, null, 2));
 }
@@ -118,9 +119,11 @@ export async function upsertRecording(recording: Recording): Promise<void> {
 }
 
 export function assertCanStore(): void {
-  if (!driveConfigured() && (isVercel() || isGitHubActions())) {
+  if (driveConfigured()) return;
+  if (isGitHubActions() && telegramConfigured()) return;
+  if (isVercel() || isGitHubActions()) {
     throw new Error(
-      "Connect Google Drive so the recording has a home. GitHub's runner and the hosted site do not keep files.",
+      "Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to the GitHub Actions secrets. The runner does not keep files on its own.",
     );
   }
 }

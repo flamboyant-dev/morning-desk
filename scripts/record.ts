@@ -21,7 +21,7 @@ record({
   seconds,
   scheduled,
   waitForWindow,
-  sourceUrl: arg("--url"),
+  sourceUrl: arg("--url") || env("STREAM_URL") || undefined,
 })
   .then((recording) => {
     console.log(

@@ -58,14 +58,18 @@ Playback uses an unlisted Drive link (anyone with the link can open that file). 
 
 ### 3. GitHub Actions
 
-Push this project to GitHub. Under **Settings → Secrets and variables → Actions**, add:
+This project is not on GitHub yet. Create a GitHub repository, push this code to it, then open **Settings → Secrets and variables → Actions** and add:
 
-- `GOOGLE_CLIENT_ID` — OAuth client id
-- `GOOGLE_CLIENT_SECRET` — OAuth client secret
-- `GOOGLE_REFRESH_TOKEN` — from `npm run drive-auth`
-- `DRIVE_FOLDER_ID` — the folder id
-- `TELEGRAM_BOT_TOKEN` — from BotFather
-- `TELEGRAM_CHAT_ID` — your chat id
+- `STREAM_URL` — the `.m3u8` link, or the page that plays it
+- `TELEGRAM_BOT_TOKEN` — the BotFather token
+- `TELEGRAM_CHAT_ID` — `6785014444`
+
+Drive secrets can wait. Without them, the job sends the audio and a smaller video into the Telegram chat. Add the Google secrets later only if you also want the full video in Drive:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REFRESH_TOKEN`
+- `DRIVE_FOLDER_ID`
 
 The workflow [`.github/workflows/record.yml`](.github/workflows/record.yml) starts at 01:35 UTC (07:05 IST), waits until 07:10, then records 15 minutes. GitHub’s free scheduler can slip by a few minutes. The desk shows the real start time. You can also run it by hand from the Actions tab; the manual run records 30 seconds unless you change the input.
 

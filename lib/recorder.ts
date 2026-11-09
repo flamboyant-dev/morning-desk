@@ -2,7 +2,6 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { env } from "@/lib/env";
 import { clearActiveRecording, readActiveRecording, writeActiveRecording } from "@/lib/lock";
 import { browserUserAgent, resolveStreamUrl } from "@/lib/resolve-stream";
 import {
@@ -12,7 +11,13 @@ import {
   storeCapturedFiles,
   upsertRecording,
 } from "@/lib/store";
-import { sendTelegramAudio, sendTelegramMessage, telegramConfigured } from "@/lib/telegram";
+import { env } from "@/lib/env";
+import {
+  sendTelegramAudio,
+  sendTelegramMessage,
+  sendTelegramVideo,
+  telegramConfigured,
+} from "@/lib/telegram";
 import {
   DAILY_SECONDS,
   formatDuration,
@@ -279,9 +284,63 @@ async function capture(
   return { audioPath };
 }
 
+const TELEGRAM_VIDEO_LIMIT = 45 * 1024 * 1024;
+
+async function videoForTelegram(
+  videoPath: string | undefined,
+  work: string,
+  seconds: number,
+  log: (message: string) => void,
+): Promise<string | undefined> {
+  if (!videoPath || !(await nonempty(videoPath, 1))) return undefined;
+  const current = await stat(videoPath);
+  if (current.size <= TELEGRAM_VIDEO_LIMIT) return videoPath;
+  const compact = path.join(work, "telegram.mp4");
+  log("The full video is over Telegram's 50 MB limit. Making a smaller copy.");
+  await run(
+    ffmpegBin(),
+    [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      videoPath,
+      "-vf",
+      "scale=640:-2",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-b:v",
+      "280k",
+      "-maxrate",
+      "320k",
+      "-bufsize",
+      "640k",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "64k",
+      "-movflags",
+      "+faststart",
+      compact,
+    ],
+    Math.min(20 * 60 * 1000, seconds * 3000 + 60_000),
+  ).catch((error: unknown) => {
+    log(error instanceof Error ? error.message : "Could not shrink the video.");
+  });
+  if (!(await nonempty(compact))) return undefined;
+  const shrunk = await stat(compact);
+  if (shrunk.size <= TELEGRAM_VIDEO_LIMIT) return compact;
+  log("The smaller video still does not fit on Telegram. Sending audio only.");
+  return undefined;
+}
+
 async function deliverTelegram(
   recording: Recording,
   audioPath: string | undefined,
+  videoPath: string | undefined,
   log: (message: string) => void,
 ): Promise<Recording> {
   if (!telegramConfigured()) {
@@ -296,8 +355,21 @@ async function deliverTelegram(
   const lines = [
     "Morning recording",
     `${when} IST · ${formatDuration(recording.durationSec)}`,
-    link ? `Video: ${link}` : "The video is on the desk.",
+    link ? `Video: ${link}` : "Saved in this chat.",
   ];
+  if (videoPath) {
+    try {
+      log("Sending video to Telegram.");
+      await sendTelegramVideo({
+        filePath: videoPath,
+        filename: `${recording.id}.mp4`,
+        caption: lines.join("\n"),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Telegram video failed.";
+      log(`Telegram video failed (${message}).`);
+    }
+  }
   try {
     if (!audioPath) throw new Error("This recording has no audio track to send.");
     log("Sending audio to Telegram.");
@@ -342,7 +414,7 @@ export async function record(options: {
   const scheduled = Boolean(options.scheduled);
   const seconds = clampSeconds(options.seconds, scheduled);
   const config = await loadConfig();
-  const sourceUrl = (options.sourceUrl ?? config.streamUrl).trim();
+  const sourceUrl = (options.sourceUrl || env("STREAM_URL") || config.streamUrl).trim();
   const id = `${recordingStamp()}-${Math.random().toString(36).slice(2, 6)}`;
   await writeActiveRecording(id);
 
@@ -373,11 +445,22 @@ export async function record(options: {
       throw new Error("The recording finished without a video or audio file.");
     }
     log("Storing the recording.");
+    const telegramVideo = await videoForTelegram(
+      captured.videoPath,
+      work,
+      seconds,
+      log,
+    );
     recording = await storeCapturedFiles(recording, captured);
     recording.status = "ready";
     recording.error = undefined;
     await upsertRecording(recording);
-    recording = await deliverTelegram(recording, captured.audioPath, log);
+    recording = await deliverTelegram(
+      recording,
+      captured.audioPath,
+      telegramVideo,
+      log,
+    );
     await upsertRecording(recording);
     await pruneRecordings(config.retentionDays);
     log(`Saved ${recording.id}.`);
