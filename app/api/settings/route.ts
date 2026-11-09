@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { driveConfigured } from "@/lib/drive";
+import { driveRedirectUri, requestOrigin } from "@/lib/drive-link";
 import { isVercel } from "@/lib/env";
 import { signStreamCookie, readStreamCookie, STREAM_COOKIE } from "@/lib/stream-cookie";
 import { connectionStatus, loadConfig, normalizeConfig, saveConfig } from "@/lib/store";
@@ -11,10 +12,14 @@ async function browserStreams() {
   return readStreamCookie(jar.get(STREAM_COOKIE)?.value);
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const config = await loadConfig(await browserStreams());
-    return NextResponse.json({ config, status: connectionStatus() });
+    return NextResponse.json({
+      config,
+      status: await connectionStatus(),
+      driveRedirect: driveRedirectUri(requestOrigin(request)),
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not load settings.";
     return NextResponse.json({ error: message }, { status: 500 });
@@ -47,7 +52,7 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({
         config: next,
-        status: connectionStatus(),
+        status: await connectionStatus(),
         message:
           "Saved in this browser. Live plays Stream 1 and switches to Stream 2 if Stream 1 does not start. The 7:10 job still uses Stream 1 from GitHub.",
       });
@@ -55,7 +60,7 @@ export async function POST(request: Request) {
     const config = await saveConfig(next);
     return NextResponse.json({
       config,
-      status: connectionStatus(),
+      status: await connectionStatus(),
       message: "Saved. Live plays Stream 1 and switches to Stream 2 if Stream 1 does not start.",
     });
   } catch (error) {

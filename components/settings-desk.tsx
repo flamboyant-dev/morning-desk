@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { WINDOW_LABEL } from "@/lib/time";
 import type { ConnectionStatus, DeskConfig } from "@/lib/types";
 
-type Payload = { config: DeskConfig; status: ConnectionStatus };
+type Payload = { config: DeskConfig; status: ConnectionStatus; driveRedirect?: string };
 
 export function SettingsDesk() {
   const [payload, setPayload] = useState<Payload | null>(null);
@@ -30,6 +30,7 @@ export function SettingsDesk() {
   const [triggerMessage, setTriggerMessage] = useState("");
   const [triggerError, setTriggerError] = useState("");
   const [triggering, setTriggering] = useState(false);
+  const [driveNote, setDriveNote] = useState("");
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -53,6 +54,15 @@ export function SettingsDesk() {
       })();
     }, 0);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("drive") === "connected") {
+      setDriveNote("Google Drive is connected.");
+    } else if (params.get("driveError")) {
+      setDriveNote(params.get("driveError") || "Google Drive did not connect.");
+    }
   }, []);
 
   async function save(event: React.FormEvent) {
@@ -216,6 +226,20 @@ export function SettingsDesk() {
                 on={Boolean(payload?.status.drive)}
                 detail={driveDetail(payload?.status)}
               />
+              {driveNote ? <p className="text-sm">{driveNote}</p> : null}
+              {payload?.driveRedirect ? (
+                <p className="text-xs leading-5 text-muted-foreground">
+                  In the Google client, add this redirect address, then press the button:{" "}
+                  <span className="break-all text-foreground">{payload.driveRedirect}</span>
+                </p>
+              ) : null}
+              <Button
+                nativeButton={false}
+                render={<a href="/api/drive/start" />}
+                className="h-11 w-full sm:w-auto"
+              >
+                {payload?.status.drive ? "Connect Google Drive again" : "Connect Google Drive"}
+              </Button>
               <Connection
                 name="Telegram"
                 on={Boolean(payload?.status.telegram)}

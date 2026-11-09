@@ -3,7 +3,12 @@ import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 
 const LOCKED_PAGES = ["/settings"];
-const LOCKED_API = new Set(["/api/settings", "/api/trigger"]);
+const LOCKED_API = new Set([
+  "/api/settings",
+  "/api/trigger",
+  "/api/drive/start",
+  "/api/drive/callback",
+]);
 
 function isLocked(pathname: string): boolean {
   if (LOCKED_API.has(pathname)) return true;

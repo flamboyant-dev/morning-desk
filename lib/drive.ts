@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { createSign } from "node:crypto";
 import { env } from "@/lib/env";
+import { DRIVE_LINK_COOKIE, readDriveLink } from "@/lib/drive-link";
 
 // Files this app creates. A normal Gmail account can store those against its
 // own 15 GB, and this scope can be published without a Google verification review.
@@ -11,7 +12,36 @@ type Credentials = {
   private_key: string;
 };
 
-let cachedToken: { token: string; exp: number } | null = null;
+let cachedToken: { token: string; exp: number; key: string } | null = null;
+
+async function linkedOAuth(): Promise<{ refreshToken: string; folderId: string } | null> {
+  const clientReady = Boolean(env("GOOGLE_CLIENT_ID") && env("GOOGLE_CLIENT_SECRET"));
+  const envToken = env("GOOGLE_REFRESH_TOKEN");
+  const envFolder = env("DRIVE_FOLDER_ID");
+  if (clientReady && envToken && envFolder) {
+    return { refreshToken: envToken, folderId: envFolder };
+  }
+  try {
+    const { cookies } = await import("next/headers");
+    const jar = await cookies();
+    const linked = readDriveLink(jar.get(DRIVE_LINK_COOKIE)?.value);
+    if (clientReady && linked) return linked;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export async function driveReady(): Promise<boolean> {
+  if (serviceAccountConfigured()) return true;
+  return Boolean(await linkedOAuth());
+}
+
+export async function driveReadyMode(): Promise<"oauth" | "service-account" | "off"> {
+  if (await linkedOAuth()) return "oauth";
+  if (serviceAccountConfigured()) return "service-account";
+  return "off";
+}
 
 export function oauthConfigured(): boolean {
   return Boolean(
@@ -36,7 +66,9 @@ export function driveMode(): "oauth" | "service-account" | "off" {
   return "off";
 }
 
-export function folderId(): string {
+async function folderId(): Promise<string> {
+  const linked = await linkedOAuth();
+  if (linked) return linked.folderId;
   const id = env("DRIVE_FOLDER_ID");
   if (!id) throw new Error("Set DRIVE_FOLDER_ID to the Google Drive folder.");
   return id;
@@ -64,13 +96,15 @@ function loadServiceAccount(): Credentials {
 }
 
 async function oauthAccessToken(): Promise<string> {
+  const linked = await linkedOAuth();
+  if (!linked) throw new Error("Google Drive is not connected.");
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       client_id: env("GOOGLE_CLIENT_ID"),
       client_secret: env("GOOGLE_CLIENT_SECRET"),
-      refresh_token: env("GOOGLE_REFRESH_TOKEN"),
+      refresh_token: linked.refreshToken,
       grant_type: "refresh_token",
     }),
   });
@@ -125,11 +159,13 @@ async function serviceAccountAccessToken(): Promise<string> {
 }
 
 async function accessToken(): Promise<string> {
-  if (cachedToken && cachedToken.exp > Date.now() + 60_000) return cachedToken.token;
-  const token = oauthConfigured()
-    ? await oauthAccessToken()
-    : await serviceAccountAccessToken();
-  cachedToken = { token, exp: Date.now() + 50 * 60 * 1000 };
+  const linked = await linkedOAuth();
+  const key = linked?.refreshToken || "service-account";
+  if (cachedToken && cachedToken.key === key && cachedToken.exp > Date.now() + 60_000) {
+    return cachedToken.token;
+  }
+  const token = linked ? await oauthAccessToken() : await serviceAccountAccessToken();
+  cachedToken = { token, exp: Date.now() + 50 * 60 * 1000, key };
   return token;
 }
 
@@ -156,7 +192,7 @@ function escapeQuery(value: string): string {
 }
 
 async function findNamedFile(name: string): Promise<string | null> {
-  const parent = folderId();
+  const parent = await folderId();
   const url = new URL("https://www.googleapis.com/drive/v3/files");
   url.searchParams.set(
     "q",
@@ -215,7 +251,7 @@ export async function uploadLocalFile(
 
 async function uploadBuffer(bytes: Buffer, name: string, mime: string): Promise<string> {
   const boundary = `morningdesk${Date.now()}`;
-  const metadata = JSON.stringify({ name, parents: [folderId()] });
+  const metadata = JSON.stringify({ name, parents: [await folderId()] });
   const preamble = Buffer.from(
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
       `--${boundary}\r\nContent-Type: ${mime}\r\n\r\n`,

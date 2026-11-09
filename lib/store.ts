@@ -3,8 +3,9 @@ import path from "node:path";
 import {
   deleteDriveFile,
   driveConfigured,
+  driveReady,
+  driveReadyMode,
   driveDownloadUrl,
-  driveMode,
   driveViewUrl,
   readDriveJson,
   shareAnyone,
@@ -35,11 +36,12 @@ export function safeRecordingId(id: string): string {
   return id;
 }
 
-export function connectionStatus(): ConnectionStatus {
-  const drive = driveConfigured();
+export async function connectionStatus(): Promise<ConnectionStatus> {
+  const driveMode = await driveReadyMode();
+  const drive = driveMode !== "off";
   return {
     drive,
-    driveMode: driveMode(),
+    driveMode,
     telegram: telegramConfigured(),
     github: githubDispatchConfigured(),
     localRecord: !isVercel(),
@@ -73,7 +75,7 @@ async function readLocalJson<T>(file: string): Promise<T | null> {
 export async function loadConfig(
   browser?: Partial<Pick<DeskConfig, "streamUrl" | "streamUrl2">>,
 ): Promise<DeskConfig> {
-  const stored = driveConfigured()
+  const stored = (await driveReady())
     ? await readDriveJson<DeskConfig>("config.json")
     : await readLocalJson<DeskConfig>(configPath);
   let config = normalizeConfig(stored);
@@ -92,7 +94,7 @@ export async function loadConfig(
 
 export async function saveConfig(input: DeskConfig): Promise<DeskConfig> {
   const next = normalizeConfig(input);
-  if (driveConfigured()) {
+  if (await driveReady()) {
     await writeDriveJson("config.json", next);
     return next;
   }
@@ -107,7 +109,7 @@ export async function saveConfig(input: DeskConfig): Promise<DeskConfig> {
 }
 
 export async function loadRecordings(): Promise<Recording[]> {
-  const raw = driveConfigured()
+  const raw = (await driveReady())
     ? await readDriveJson<Recording[]>("recordings.json")
     : await readLocalJson<Recording[]>(recordingsPath);
   if (!Array.isArray(raw)) return [];
@@ -116,7 +118,7 @@ export async function loadRecordings(): Promise<Recording[]> {
 
 export async function saveRecordings(recordings: Recording[]): Promise<void> {
   const clean = recordings.filter((item) => !item.sample);
-  if (driveConfigured()) {
+  if (await driveReady()) {
     await writeDriveJson("recordings.json", clean);
     return;
   }
@@ -151,7 +153,7 @@ export async function storeCapturedFiles(
   files: { videoPath?: string; audioPath?: string },
 ): Promise<Recording> {
   const next: Recording = { ...recording, video: undefined, audio: undefined };
-  if (driveConfigured()) {
+  if (await driveReady()) {
     if (files.videoPath) {
       const name = `${recording.id}.mp4`;
       const id = await uploadLocalFile(files.videoPath, name, "video/mp4");

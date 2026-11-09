@@ -10,7 +10,7 @@ export async function GET() {
       readActiveRecording(),
     ]);
     const usingSamples = recordings.length === 0;
-    const status = connectionStatus();
+    const status = await connectionStatus();
     return NextResponse.json({
       recordings: usingSamples ? SAMPLE_RECORDINGS : recordings,
       usingSamples,
