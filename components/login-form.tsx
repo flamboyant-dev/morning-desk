@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,19 +13,6 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [devPassword, setDevPassword] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void fetch("/api/session")
-        .then((response) => response.json())
-        .then((body: { devPassword?: boolean }) => {
-          setDevPassword(Boolean(body.devPassword));
-        })
-        .catch(() => undefined);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -57,10 +44,9 @@ export function LoginForm() {
     <main className="flex min-h-full flex-1 items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
         <p className="text-xs tracking-[0.2em] text-primary uppercase">{WINDOW_LABEL}</p>
-        <h1 className="mt-3 font-heading text-5xl tracking-tight">Morning desk</h1>
+        <h1 className="mt-3 font-heading text-5xl tracking-tight">Settings</h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          The 7:10 show, kept for you. Fifteen minutes of the stream, every morning, ready to
-          play.
+          Live and the library stay open. This password only locks settings.
         </p>
         <form className="mt-8 flex flex-col gap-4" onSubmit={submit}>
           <div className="flex flex-col gap-2">
@@ -75,11 +61,6 @@ export function LoginForm() {
               required
             />
           </div>
-          {devPassword ? (
-            <p className="text-xs leading-5 text-muted-foreground">
-              This local desk opens with the password morning until you set ADMIN_PASSWORD.
-            </p>
-          ) : null}
           {error ? (
             <p className="text-sm text-destructive" role="alert">
               {error}

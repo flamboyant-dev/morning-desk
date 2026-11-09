@@ -1,4 +1,3 @@
-import { isRequestAuthed } from "@/lib/auth";
 import {
   fetchPublic,
   isPlaylistResponse,
@@ -21,9 +20,6 @@ function originOf(request: Request): string {
 }
 
 export async function GET(request: Request) {
-  if (!isRequestAuthed(request)) {
-    return new Response("Sign in required.", { status: 401 });
-  }
   const token = new URL(request.url).searchParams.get("t") ?? "";
   try {
     const target = readMediaToken(token);

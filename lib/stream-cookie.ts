@@ -4,7 +4,7 @@ import { adminPassword } from "@/lib/auth";
 export const STREAM_COOKIE = "desk_stream";
 
 function secret(): string {
-  return adminPassword() || "morning";
+  return adminPassword() || "12345";
 }
 
 function sign(body: string): string {

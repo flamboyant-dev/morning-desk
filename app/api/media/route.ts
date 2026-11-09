@@ -1,12 +1,8 @@
 import { createReadStream, promises as fs } from "node:fs";
 import { Readable } from "node:stream";
-import { isRequestAuthed } from "@/lib/auth";
 import { mediaFilePath } from "@/lib/store";
 
 export async function GET(request: Request) {
-  if (!isRequestAuthed(request)) {
-    return new Response("Sign in required.", { status: 401 });
-  }
   const url = new URL(request.url);
   const id = url.searchParams.get("id") ?? "";
   const kind = url.searchParams.get("kind") === "audio" ? "audio" : "video";

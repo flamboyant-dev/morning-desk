@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { isRequestAuthed } from "@/lib/auth";
 import {
   fetchPublic,
   isPlaylistResponse,
@@ -21,9 +20,6 @@ function originOf(request: Request): string {
 }
 
 export async function GET(request: Request) {
-  if (!isRequestAuthed(request)) {
-    return new Response("Sign in required.", { status: 401 });
-  }
   try {
     const jar = await cookies();
     const config = await loadConfig(readStreamCookie(jar.get(STREAM_COOKIE)?.value));

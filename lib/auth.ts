@@ -3,14 +3,11 @@ import { env } from "@/lib/env";
 
 export const SESSION_COOKIE = "desk_session";
 const PAYLOAD = "desk-v1";
-const DEV_PASSWORD = "morning";
+const SETTINGS_PASSWORD = "12345";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 export function adminPassword(): string {
-  const configured = env("ADMIN_PASSWORD");
-  if (configured) return configured;
-  if (process.env.NODE_ENV !== "production") return DEV_PASSWORD;
-  return "";
+  return env("ADMIN_PASSWORD") || SETTINGS_PASSWORD;
 }
 
 export function usingDevPassword(): boolean {

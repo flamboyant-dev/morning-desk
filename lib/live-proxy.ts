@@ -8,7 +8,7 @@ const TOKEN_TTL_MS = 3 * 60 * 1000;
 const MAX_PLAYLIST_BYTES = 2_000_000;
 
 function secret(): string {
-  return adminPassword() || "morning";
+  return adminPassword() || "12345";
 }
 
 function mac(body: string): string {

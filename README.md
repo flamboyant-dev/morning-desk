@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open [http://127.0.0.1:43123](http://127.0.0.1:43123). Until you set `ADMIN_PASSWORD`, the local password is `morning`.
+Open [http://127.0.0.1:43123](http://127.0.0.1:43123). Live and the library are open. Settings asks for a password, `12345` until you set `ADMIN_PASSWORD`.
 
 With no Google or Telegram keys, settings and recordings sit in `data/` (that folder is not committed). The archive shows a six-second sample until a real take exists. Put a stream URL in Settings, then **Record 30 seconds**. On this machine that records locally. On the hosted site it starts the GitHub Action.
 
