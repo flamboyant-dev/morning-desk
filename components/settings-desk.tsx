@@ -107,7 +107,7 @@ export function SettingsDesk() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 pt-4 md:px-8 md:pt-6">
       <header>
         <p className="text-xs tracking-[0.18em] text-primary uppercase">Schedule</p>
         <h1 className="mt-1 font-heading text-4xl tracking-tight">The morning job</h1>

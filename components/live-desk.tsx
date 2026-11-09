@@ -51,7 +51,7 @@ export function LiveDesk() {
   }, [attempt]);
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-4 md:px-8 md:pt-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs tracking-[0.18em] text-primary uppercase">Live</p>

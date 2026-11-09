@@ -49,7 +49,7 @@
 }
 
 :root {
-  --background: oklch(0.17 0.016 58);
+  --background: oklch(0.08 0.01 58);
   --foreground: oklch(0.96 0.02 90);
   --card: oklch(0.225 0.02 58);
   --card-foreground: oklch(0.96 0.02 90);
@@ -84,7 +84,7 @@
 }
 
 .dark {
-  --background: oklch(0.17 0.016 58);
+  --background: oklch(0.08 0.01 58);
   --foreground: oklch(0.96 0.02 90);
   --card: oklch(0.225 0.02 58);
   --card-foreground: oklch(0.96 0.02 90);
@@ -147,12 +147,15 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    background-image: radial-gradient(
-      900px 420px at 0% -10%,
-      oklch(0.42 0.09 72 / 0.35),
-      transparent 60%
-    );
+    @apply bg-black text-foreground;
     min-height: 100%;
+  }
+
+  .rail {
+    scrollbar-width: none;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,9 @@ type Load =
   | { state: "ready"; data: RecordingsPayload };
 
 export function RecordingsDesk() {
+  const requestedId = useSearchParams().get("id");
   const [load, setLoad] = useState<Load>({ state: "loading" });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(requestedId);
 
   const refresh = useCallback(async () => {
     try {
@@ -28,6 +30,9 @@ export function RecordingsDesk() {
       }
       setLoad({ state: "ready", data: body });
       setSelectedId((current) => {
+        if (requestedId && body.recordings.some((item) => item.id === requestedId)) {
+          return requestedId;
+        }
         if (current && body.recordings.some((item) => item.id === current)) return current;
         return body.recordings[0]?.id ?? null;
       });
@@ -37,14 +42,14 @@ export function RecordingsDesk() {
         message: "The archive did not respond. Check the connection and try again.",
       });
     }
-  }, []);
+  }, [requestedId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void refresh();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [refresh]);
+  }, [refresh, requestedId]);
 
   const recordingNow = load.state === "ready" && load.data.recordingNow;
 
@@ -63,7 +68,7 @@ export function RecordingsDesk() {
       : undefined;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-4 md:px-8 md:pt-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs tracking-[0.18em] text-primary uppercase">Archive</p>

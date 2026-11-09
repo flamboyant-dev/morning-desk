@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -19,12 +19,28 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Morning desk",
-    template: "%s · Morning desk",
+    default: "Morning",
+    template: "%s · Morning",
   },
-  description:
-    "Record a stream every morning from 7:10 to 7:25 IST, then play the video and audio back.",
+  description: "Watch the morning stream and play the 7:10 recordings.",
+  applicationName: "Morning",
   robots: { index: false, follow: false },
+  appleWebApp: {
+    capable: true,
+    title: "Morning",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

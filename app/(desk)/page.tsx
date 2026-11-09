@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { RecordingsDesk } from "@/components/recordings-desk";
+import { HomeScreen } from "@/components/home-screen";
 
-export const metadata: Metadata = { title: "Archive" };
+export const metadata: Metadata = { title: "Home" };
 
-export default function ArchivePage() {
-  return <RecordingsDesk />;
+export default function HomePage() {
+  return <HomeScreen />;
 }
