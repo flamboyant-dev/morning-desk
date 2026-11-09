@@ -124,6 +124,28 @@
   html {
     @apply font-sans;
   }
+  .desk-player {
+    --media-accent-color: var(--primary);
+    --media-accent-text-color: var(--primary-foreground);
+    --media-border-radius: 1rem;
+    --media-object-fit: contain;
+    --media-object-position: center;
+    --media-font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    overflow: hidden;
+    background: black;
+  }
+
+  .desk-audio {
+    aspect-ratio: auto;
+    background: transparent;
+  }
+
+  @media (max-width: 640px) {
+    .desk-player {
+      --media-scale-unit: 0.85rem;
+    }
+  }
+
   body {
     @apply bg-background text-foreground;
     background-image: radial-gradient(

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { DeskPlayer } from "@/components/desk-player";
 
 type Phase =
   | { state: "loading" }
@@ -13,56 +13,26 @@ type Phase =
   | { state: "ready" };
 
 export function LiveDesk() {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [phase, setPhase] = useState<Phase>({ state: "loading" });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const media = video;
     let cancelled = false;
-    let detach = () => {};
 
     async function start() {
       setPhase({ state: "loading" });
       try {
         const response = await fetch("/api/live/playlist", { cache: "no-store" });
+        if (cancelled) return;
         if (response.status === 404) {
-          if (!cancelled) setPhase({ state: "empty" });
+          setPhase({ state: "empty" });
           return;
         }
         if (!response.ok) {
           const message = (await response.text()) || "The live stream did not open.";
-          if (!cancelled) setPhase({ state: "error", message });
+          setPhase({ state: "error", message });
           return;
         }
-        if (cancelled) return;
-        const native = media.canPlayType("application/vnd.apple.mpegurl");
-        if (native) {
-          media.src = "/api/live/playlist";
-          setPhase({ state: "ready" });
-          return;
-        }
-        const { default: Hls } = await import("hls.js");
-        if (!Hls.isSupported()) {
-          setPhase({
-            state: "error",
-            message: "This browser cannot play the live stream.",
-          });
-          return;
-        }
-        const hls = new Hls({ enableWorker: false, lowLatencyMode: true });
-        detach = () => hls.destroy();
-        hls.on(Hls.Events.ERROR, (_event, data) => {
-          if (!data.fatal || cancelled) return;
-          setPhase({
-            state: "error",
-            message: "Playback stopped. The stream may be offline, or it blocked this site.",
-          });
-        });
-        hls.loadSource("/api/live/playlist");
-        hls.attachMedia(media);
         setPhase({ state: "ready" });
       } catch {
         if (!cancelled) {
@@ -77,9 +47,6 @@ export function LiveDesk() {
     void start();
     return () => {
       cancelled = true;
-      detach();
-      video.removeAttribute("src");
-      video.load();
     };
   }, [attempt]);
 
@@ -90,8 +57,8 @@ export function LiveDesk() {
           <p className="text-xs tracking-[0.18em] text-primary uppercase">Live</p>
           <h1 className="mt-1 font-heading text-4xl tracking-tight">The stream</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-            This plays the same address the morning job records. The desk stays locked
-            behind your password.
+            Quality, speed, captions, and picture-in-picture sit in the player. It keeps a
+            buffer so the picture stays smooth.
           </p>
         </div>
         <Button
@@ -129,33 +96,25 @@ export function LiveDesk() {
         </Alert>
       ) : null}
 
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-2xl bg-black ring-1 ring-foreground/10",
-          phase.state === "empty" || phase.state === "error" ? "hidden" : "",
-        )}
-      >
-        <video
-          ref={videoRef}
-          controls
-          playsInline
-          className={cn(
-            "aspect-video w-full bg-black",
-            phase.state === "loading" ? "invisible" : "",
-          )}
+      {phase.state === "loading" ? (
+        <div
+          className="aspect-video w-full animate-pulse rounded-2xl bg-muted"
+          aria-live="polite"
+          aria-busy="true"
         >
-          Your browser cannot play this stream.
-        </video>
-        {phase.state === "loading" ? (
-          <div
-            className="absolute inset-0 animate-pulse bg-muted"
-            aria-live="polite"
-            aria-busy="true"
-          >
-            <p className="sr-only">Opening the stream</p>
-          </div>
-        ) : null}
-      </div>
+          <p className="sr-only">Opening the stream</p>
+        </div>
+      ) : null}
+
+      {phase.state === "ready" ? (
+        <div className="flex flex-col gap-3">
+          <DeskPlayer key={attempt} src="/api/live/playlist" kind="hls" />
+          <p className="text-xs leading-5 text-muted-foreground">
+            Space plays, the arrows seek, M mutes, F is fullscreen, and I floats the picture.
+            Open the settings gear for quality and speed.
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

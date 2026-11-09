@@ -1,3 +1,4 @@
+import { DeskAudio, DeskPlayer } from "@/components/desk-player";
 import type { Recording } from "@/lib/types";
 
 function drivePreview(fileId: string): string {
@@ -26,16 +27,7 @@ export function MediaPlayer({ recording }: { recording: Recording }) {
           allow="autoplay; fullscreen"
         />
       ) : video?.url ? (
-        <video
-          key={video.url}
-          src={video.url}
-          controls
-          playsInline
-          preload="metadata"
-          className="aspect-video w-full rounded-xl bg-black"
-        >
-          Your browser cannot play this video.
-        </video>
+        <DeskPlayer key={video.url} src={video.url} kind="file" />
       ) : (
         <p className="text-sm text-muted-foreground">No video was stored for this take.</p>
       )}
@@ -45,9 +37,7 @@ export function MediaPlayer({ recording }: { recording: Recording }) {
           <p className="mb-2 text-xs tracking-wide text-muted-foreground uppercase">
             Audio
           </p>
-          <audio key={audio.url} src={audio.url} controls preload="metadata" className="w-full">
-            Your browser cannot play this audio.
-          </audio>
+          <DeskAudio key={audio.url} src={audio.url} title={audio.name} />
         </div>
       ) : null}
 
