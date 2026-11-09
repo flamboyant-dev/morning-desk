@@ -19,9 +19,14 @@ export function DeskFrame({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     setLeaving(true);
-    await fetch("/api/logout", { method: "POST" });
-    router.replace("/login");
-    router.refresh();
+    try {
+      await fetch("/api/logout", { method: "POST" });
+      router.replace("/login");
+      router.refresh();
+    } finally {
+      // The desk stays mounted between visits, so the button must not stay disabled.
+      setLeaving(false);
+    }
   }
 
   return (
