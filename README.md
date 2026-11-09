@@ -40,19 +40,19 @@ Telegram bots can upload about 50 MB. Fifteen minutes of audio fits. Fifteen min
 
 ### 2. Google Drive
 
-A service account cannot store files in a normal Gmail folder (it has no quota). Use your own Google login so the files count against your 15 GB.
+Sign in with the Gmail account that should store the videos. They count against that account’s free 15 GB. The sign-in only covers files this app creates, and the auth command creates a Drive folder named Morning desk.
 
 1. In [Google Cloud](https://console.cloud.google.com/), create a project and enable the **Google Drive API**.
-2. Configure the OAuth consent screen as **External**, add yourself as a test user, and add the scope `https://www.googleapis.com/auth/drive`.
-3. Create an OAuth client of type **Desktop app**.
-4. In Drive, create a folder. The id is the last part of `https://drive.google.com/drive/folders/FOLDER_ID`.
-5. On any computer, from this project:
+2. Open Google Auth platform, choose **External**, add your Gmail as a test user, and add the scope `https://www.googleapis.com/auth/drive.file`.
+3. On the Audience page, publish the app. Leave it in Testing and Google drops the connection after 7 days.
+4. Create an OAuth client of type **Desktop app**.
+5. From this project:
 
 ```bash
 GOOGLE_CLIENT_ID="..." GOOGLE_CLIENT_SECRET="..." npm run drive-auth
 ```
 
-6. Open the printed link, approve access, and copy `GOOGLE_REFRESH_TOKEN`.
+6. Open the printed link and approve access. The command prints `GOOGLE_REFRESH_TOKEN` and `DRIVE_FOLDER_ID`.
 
 Playback uses an unlisted Drive link (anyone with the link can open that file). The desk itself stays behind the password. A 15-minute 720p file is about 100 MB, so 60 days is roughly 6 GB.
 

@@ -2,7 +2,9 @@ import { readFile } from "node:fs/promises";
 import { createSign } from "node:crypto";
 import { env } from "@/lib/env";
 
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+// Files this app creates. A normal Gmail account can store those against its
+// own 15 GB, and this scope can be published without a Google verification review.
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
 type Credentials = {
   client_email: string;
