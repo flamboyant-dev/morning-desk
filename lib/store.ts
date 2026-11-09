@@ -53,7 +53,12 @@ export function normalizeConfig(input: Partial<DeskConfig> | null | undefined): 
     ? Math.min(365, Math.max(7, Math.round(retention)))
     : DEFAULT_CONFIG.retentionDays;
   const streamUrl = String(input?.streamUrl ?? "").trim().slice(0, 2000);
-  return { streamUrl, retentionDays };
+  const streamUrl2 = String(input?.streamUrl2 ?? "").trim().slice(0, 2000);
+  return { streamUrl, streamUrl2, retentionDays };
+}
+
+export function streamBySlot(config: DeskConfig, slot: 1 | 2): string {
+  return slot === 2 ? config.streamUrl2 : config.streamUrl;
 }
 
 async function readLocalJson<T>(file: string): Promise<T | null> {
@@ -64,13 +69,21 @@ async function readLocalJson<T>(file: string): Promise<T | null> {
   }
 }
 
-export async function loadConfig(browserUrl = ""): Promise<DeskConfig> {
+export async function loadConfig(
+  browser?: Partial<Pick<DeskConfig, "streamUrl" | "streamUrl2">>,
+): Promise<DeskConfig> {
   const stored = driveConfigured()
     ? await readDriveJson<DeskConfig>("config.json")
     : await readLocalJson<DeskConfig>(configPath);
   let config = normalizeConfig(stored);
-  if (!config.streamUrl) config = normalizeConfig({ ...config, streamUrl: browserUrl });
+  if (!config.streamUrl && browser?.streamUrl) {
+    config = normalizeConfig({ ...config, streamUrl: browser.streamUrl });
+  }
+  if (!config.streamUrl2 && browser?.streamUrl2) {
+    config = normalizeConfig({ ...config, streamUrl2: browser.streamUrl2 });
+  }
   if (!config.streamUrl) config = normalizeConfig({ ...config, streamUrl: env("STREAM_URL") });
+  if (!config.streamUrl2) config = normalizeConfig({ ...config, streamUrl2: env("STREAM_URL_2") });
   return config;
 }
 

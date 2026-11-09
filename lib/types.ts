@@ -24,11 +24,13 @@ export type Recording = {
 
 export type DeskConfig = {
   streamUrl: string;
+  streamUrl2: string;
   retentionDays: number;
 };
 
 export const DEFAULT_CONFIG: DeskConfig = {
   streamUrl: "",
+  streamUrl2: "",
   retentionDays: 60,
 };
 

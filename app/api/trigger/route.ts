@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const config = await loadConfig();
     if (!config.streamUrl.trim()) {
       return NextResponse.json(
-        { error: "Add a stream URL in Settings before recording." },
+        { error: "Add Stream 1 in Settings before recording." },
         { status: 400 },
       );
     }

@@ -15,15 +15,15 @@ function mac(body: string): string {
   return createHmac("sha256", secret()).update(body).digest("base64url");
 }
 
-export function signMediaToken(target: string): string {
+export function signMediaToken(target: string, referer: string): string {
   const body = Buffer.from(
-    JSON.stringify({ u: target, e: Date.now() + TOKEN_TTL_MS }),
+    JSON.stringify({ u: target, r: referer, e: Date.now() + TOKEN_TTL_MS }),
     "utf8",
   ).toString("base64url");
   return `${body}.${mac(body)}`;
 }
 
-export function readMediaToken(token: string): string {
+export function readMediaToken(token: string): { url: string; referer: string } {
   const dot = token.lastIndexOf(".");
   if (dot <= 0) throw new Error("That media link is not valid.");
   const body = token.slice(0, dot);
@@ -36,12 +36,13 @@ export function readMediaToken(token: string): string {
   }
   const parsed = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as {
     u?: string;
+    r?: string;
     e?: number;
   };
   if (!parsed.u || !parsed.e || parsed.e < Date.now()) {
     throw new Error("That media link expired. Reload the player.");
   }
-  return parsed.u;
+  return { url: parsed.u, referer: parsed.r || parsed.u };
 }
 
 export function rewritePlaylist(
@@ -64,8 +65,8 @@ export function rewritePlaylist(
     .join("\n");
 }
 
-export function mediaProxyUrl(origin: string, target: string): string {
-  const token = signMediaToken(target);
+export function mediaProxyUrl(origin: string, target: string, referer: string): string {
+  const token = signMediaToken(target, referer);
   return `${origin}/api/live/media?t=${encodeURIComponent(token)}`;
 }
 

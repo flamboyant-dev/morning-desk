@@ -20,6 +20,7 @@ type Payload = { config: DeskConfig; status: ConnectionStatus };
 export function SettingsDesk() {
   const [payload, setPayload] = useState<Payload | null>(null);
   const [streamUrl, setStreamUrl] = useState("");
+  const [streamUrl2, setStreamUrl2] = useState("");
   const [retentionDays, setRetentionDays] = useState("60");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -42,6 +43,7 @@ export function SettingsDesk() {
           }
           setPayload(body);
           setStreamUrl(body.config.streamUrl);
+          setStreamUrl2(body.config.streamUrl2 ?? "");
           setRetentionDays(String(body.config.retentionDays));
         } catch {
           setLoadError("Settings did not load. Check the connection and refresh.");
@@ -64,6 +66,7 @@ export function SettingsDesk() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           streamUrl,
+          streamUrl2,
           retentionDays: Number(retentionDays),
         }),
       });
@@ -74,6 +77,7 @@ export function SettingsDesk() {
       }
       setPayload(body);
       setStreamUrl(body.config.streamUrl);
+      setStreamUrl2(body.config.streamUrl2 ?? "");
       setRetentionDays(String(body.config.retentionDays));
       setSaveMessage(body.message || "Saved.");
     } catch {
@@ -134,14 +138,14 @@ export function SettingsDesk() {
             <CardHeader>
               <CardTitle>Stream</CardTitle>
               <CardDescription>
-                Paste an .m3u8 link, or the page that plays it. Live plays this address, and a
-                fresh copy is picked up at 7:10 when the player uses a short-lived link.
+                Paste an .m3u8 link, or the page that plays it. Live starts on Stream 1 and
+                switches to Stream 2 if that one does not play. The morning job uses Stream 1.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form className="flex flex-col gap-4" onSubmit={save}>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="stream-url">Stream URL</Label>
+                  <Label htmlFor="stream-url">Stream 1</Label>
                   <Input
                     id="stream-url"
                     type="url"
@@ -150,7 +154,18 @@ export function SettingsDesk() {
                     value={streamUrl}
                     onChange={(event) => setStreamUrl(event.target.value)}
                     className="h-11"
-                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="stream-url-2">Stream 2</Label>
+                  <Input
+                    id="stream-url-2"
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://example.com/backup/index.m3u8"
+                    value={streamUrl2}
+                    onChange={(event) => setStreamUrl2(event.target.value)}
+                    className="h-11"
                   />
                 </div>
                 <div className="flex flex-col gap-2">

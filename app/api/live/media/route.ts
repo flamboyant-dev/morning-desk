@@ -6,9 +6,6 @@ import {
   readPlaylist,
   rewritePlaylist,
 } from "@/lib/live-proxy";
-import { readStreamCookie, STREAM_COOKIE } from "@/lib/stream-cookie";
-import { loadConfig } from "@/lib/store";
-import { cookies } from "next/headers";
 
 export const maxDuration = 60;
 
@@ -22,10 +19,9 @@ function originOf(request: Request): string {
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get("t") ?? "";
   try {
-    const target = readMediaToken(token);
-    const jar = await cookies();
-    const config = await loadConfig(readStreamCookie(jar.get(STREAM_COOKIE)?.value));
-    const referer = config.streamUrl || target;
+    const media = readMediaToken(token);
+    const target = media.url;
+    const referer = media.referer;
     const range = request.headers.get("range");
     const fetched = await fetchPublic(target, referer, 0, range);
     const type = fetched.response.headers.get("content-type") ?? "application/octet-stream";
@@ -39,7 +35,7 @@ export async function GET(request: Request) {
       const playlist = await readPlaylist(fetched.response);
       const origin = originOf(request);
       const rewritten = rewritePlaylist(playlist, fetched.url, (absolute) =>
-        mediaProxyUrl(origin, absolute),
+        mediaProxyUrl(origin, absolute, referer),
       );
       return new Response(rewritten, {
         headers: {

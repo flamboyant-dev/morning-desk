@@ -6,14 +6,14 @@ import { signStreamCookie, readStreamCookie, STREAM_COOKIE } from "@/lib/stream-
 import { connectionStatus, loadConfig, normalizeConfig, saveConfig } from "@/lib/store";
 import type { DeskConfig } from "@/lib/types";
 
-async function browserStreamUrl(): Promise<string> {
+async function browserStreams() {
   const jar = await cookies();
   return readStreamCookie(jar.get(STREAM_COOKIE)?.value);
 }
 
 export async function GET() {
   try {
-    const config = await loadConfig(await browserStreamUrl());
+    const config = await loadConfig(await browserStreams());
     return NextResponse.json({ config, status: connectionStatus() });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not load settings.";
@@ -28,13 +28,14 @@ export async function POST(request: Request) {
   }
   const next = normalizeConfig({
     streamUrl: String(body.streamUrl ?? ""),
+    streamUrl2: String(body.streamUrl2 ?? ""),
     retentionDays: Number(body.retentionDays),
   });
   try {
     if (isVercel() && !driveConfigured()) {
       const jar = await cookies();
-      if (next.streamUrl) {
-        jar.set(STREAM_COOKIE, signStreamCookie(next.streamUrl), {
+      if (next.streamUrl || next.streamUrl2) {
+        jar.set(STREAM_COOKIE, signStreamCookie(next), {
           httpOnly: true,
           sameSite: "lax",
           secure: process.env.NODE_ENV === "production",
@@ -48,14 +49,14 @@ export async function POST(request: Request) {
         config: next,
         status: connectionStatus(),
         message:
-          "Saved in this browser. Live plays it here. The 7:10 job still uses the stream address stored in GitHub.",
+          "Saved in this browser. Live plays Stream 1 and switches to Stream 2 if Stream 1 does not start. The 7:10 job still uses Stream 1 from GitHub.",
       });
     }
     const config = await saveConfig(next);
     return NextResponse.json({
       config,
       status: connectionStatus(),
-      message: "Saved. Live plays this address, and the 7:10 job reads it when it starts.",
+      message: "Saved. Live plays Stream 1 and switches to Stream 2 if Stream 1 does not start.",
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not save settings.";

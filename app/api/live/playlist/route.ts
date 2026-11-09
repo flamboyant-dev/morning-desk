@@ -8,7 +8,7 @@ import {
 } from "@/lib/live-proxy";
 import { resolveStreamUrl } from "@/lib/resolve-stream";
 import { readStreamCookie, STREAM_COOKIE } from "@/lib/stream-cookie";
-import { loadConfig } from "@/lib/store";
+import { loadConfig, streamBySlot } from "@/lib/store";
 
 export const maxDuration = 60;
 
@@ -23,18 +23,21 @@ export async function GET(request: Request) {
   try {
     const jar = await cookies();
     const config = await loadConfig(readStreamCookie(jar.get(STREAM_COOKIE)?.value));
-    if (!config.streamUrl) {
-      return new Response("Add the stream URL in Settings.", { status: 404 });
+    const requested = new URL(request.url).searchParams.get("server");
+    const slot = requested === "2" ? 2 : 1;
+    const source = streamBySlot(config, slot);
+    if (!source) {
+      return new Response(`Add Stream ${slot} in Settings.`, { status: 404 });
     }
-    const resolved = await resolveStreamUrl(config.streamUrl);
-    const fetched = await fetchPublic(resolved, config.streamUrl);
+    const resolved = await resolveStreamUrl(source);
+    const fetched = await fetchPublic(resolved, source);
     if (!isPlaylistResponse(fetched.url, fetched.response.headers.get("content-type") ?? "")) {
       throw new Error("The stream did not return a playlist.");
     }
     const playlist = await readPlaylist(fetched.response);
     const origin = originOf(request);
     const rewritten = rewritePlaylist(playlist, fetched.url, (absolute) =>
-      mediaProxyUrl(origin, absolute),
+      mediaProxyUrl(origin, absolute, source),
     );
     return new Response(rewritten, {
       headers: {

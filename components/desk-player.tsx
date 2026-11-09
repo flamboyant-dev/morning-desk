@@ -23,9 +23,11 @@ const smoothHls = {
 export function DeskPlayer({
   src,
   kind,
+  onError,
 }: {
   src: string;
   kind: "hls" | "file";
+  onError?: () => void;
 }) {
   return (
     <VideoPlayer>
@@ -34,6 +36,7 @@ export function DeskPlayer({
           <HlsJsVideo
             playsInline
             preload="auto"
+            onError={onError}
             source={{
               src,
               type: "application/vnd.apple.mpegurl",
