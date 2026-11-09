@@ -7,6 +7,8 @@ import {
   requestOrigin,
   signDriveLink,
 } from "@/lib/drive-link";
+import { env } from "@/lib/env";
+import { saveActionsSecret } from "@/lib/github-secrets";
 
 function fail(origin: string, message: string) {
   const back = new URL("/settings", origin);
@@ -35,8 +37,13 @@ export async function GET(request: Request) {
   }
   try {
     const link = await exchangeDriveCode(origin, code);
+    await saveActionsSecret("GOOGLE_CLIENT_ID", env("GOOGLE_CLIENT_ID"));
+    await saveActionsSecret("GOOGLE_CLIENT_SECRET", env("GOOGLE_CLIENT_SECRET"));
+    await saveActionsSecret("GOOGLE_REFRESH_TOKEN", link.refreshToken);
+    await saveActionsSecret("DRIVE_FOLDER_ID", link.folderId);
     const back = new URL("/settings", origin);
     back.searchParams.set("drive", "connected");
+    back.searchParams.set("morning", "saved");
     const response = NextResponse.redirect(back);
     response.cookies.set(DRIVE_LINK_COOKIE, signDriveLink(link), {
       httpOnly: true,

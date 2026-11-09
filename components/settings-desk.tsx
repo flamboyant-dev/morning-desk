@@ -59,7 +59,11 @@ export function SettingsDesk() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("drive") === "connected") {
-      setDriveNote("Google Drive is connected.");
+      setDriveNote(
+        params.get("morning") === "saved"
+          ? "Google Drive is connected. The 7:10 recording will save the video there."
+          : "Google Drive is connected.",
+      );
     } else if (params.get("driveError")) {
       setDriveNote(params.get("driveError") || "Google Drive did not connect.");
     }
