@@ -1,6 +1,6 @@
 # Morning desk
 
-A private admin site that records an m3u8 stream every morning from **7:10 to 7:25 IST**, keeps the video in Google Drive, sends the audio (and a Drive link) to Telegram, and lets you play both back in the browser.
+A private admin site that plays an m3u8 stream on the Live page, records it every morning from **7:10 to 7:25 IST**, keeps the video in Google Drive, sends the audio (and a Drive link) to Telegram, and lets you play both back in the browser.
 
 Your computer does not stay on. A free GitHub Actions runner is the clock. The site itself can live on Vercel’s free plan. Drive’s free 15 GB holds the files, and clips older than 60 days are deleted so that space lasts.
 

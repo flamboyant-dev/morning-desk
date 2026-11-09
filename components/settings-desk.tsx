@@ -67,7 +67,7 @@ export function SettingsDesk() {
           retentionDays: Number(retentionDays),
         }),
       });
-      const body = (await response.json()) as Payload & { error?: string };
+      const body = (await response.json()) as Payload & { error?: string; message?: string };
       if (!response.ok) {
         setSaveError(body.error || "Could not save settings.");
         return;
@@ -75,7 +75,7 @@ export function SettingsDesk() {
       setPayload(body);
       setStreamUrl(body.config.streamUrl);
       setRetentionDays(String(body.config.retentionDays));
-      setSaveMessage("Saved. The 7:10 job reads this address when it starts.");
+      setSaveMessage(body.message || "Saved.");
     } catch {
       setSaveError("Could not save settings.");
     } finally {
@@ -134,8 +134,8 @@ export function SettingsDesk() {
             <CardHeader>
               <CardTitle>Stream</CardTitle>
               <CardDescription>
-                Paste an .m3u8 link, or the page that plays it. A fresh address is picked up at
-                7:10, which matters when the player uses a short-lived link.
+                Paste an .m3u8 link, or the page that plays it. Live plays this address, and a
+                fresh copy is picked up at 7:10 when the player uses a short-lived link.
               </CardDescription>
             </CardHeader>
             <CardContent>

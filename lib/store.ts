@@ -11,7 +11,7 @@ import {
   uploadLocalFile,
   writeDriveJson,
 } from "@/lib/drive";
-import { isGitHubActions, isVercel } from "@/lib/env";
+import { env, isGitHubActions, isVercel } from "@/lib/env";
 import { telegramConfigured } from "@/lib/telegram";
 import { WINDOW_LABEL } from "@/lib/time";
 import {
@@ -64,12 +64,14 @@ async function readLocalJson<T>(file: string): Promise<T | null> {
   }
 }
 
-export async function loadConfig(): Promise<DeskConfig> {
-  if (driveConfigured()) {
-    const remote = await readDriveJson<DeskConfig>("config.json");
-    return normalizeConfig(remote);
-  }
-  return normalizeConfig(await readLocalJson<DeskConfig>(configPath));
+export async function loadConfig(browserUrl = ""): Promise<DeskConfig> {
+  const stored = driveConfigured()
+    ? await readDriveJson<DeskConfig>("config.json")
+    : await readLocalJson<DeskConfig>(configPath);
+  let config = normalizeConfig(stored);
+  if (!config.streamUrl) config = normalizeConfig({ ...config, streamUrl: browserUrl });
+  if (!config.streamUrl) config = normalizeConfig({ ...config, streamUrl: env("STREAM_URL") });
+  return config;
 }
 
 export async function saveConfig(input: DeskConfig): Promise<DeskConfig> {

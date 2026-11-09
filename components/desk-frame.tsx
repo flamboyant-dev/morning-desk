@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { WINDOW_LABEL } from "@/lib/time";
 
 const links = [
+  { href: "/live", label: "Live" },
   { href: "/", label: "Archive" },
   { href: "/settings", label: "Settings" },
 ];
