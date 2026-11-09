@@ -6,3 +6,4 @@
 export const STREAM_1 = "https://da86m1sqpm3o0.cloudfront.net/28072023/smil:zeetamil1.smil/chunklist_b2628000.m3u8";
 
 export const STREAM_2 = "https://live.fmovies.lc/v1/live/proxy/zee-tamil-720p";
+
