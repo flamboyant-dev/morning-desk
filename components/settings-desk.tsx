@@ -139,7 +139,8 @@ export function SettingsDesk() {
               <CardTitle>Stream</CardTitle>
               <CardDescription>
                 Paste an .m3u8 link, or the page that plays it. Live starts on Stream 1 and
-                switches to Stream 2 if that one does not play. The morning job uses Stream 1.
+                switches to Stream 2 if that one does not play. Addresses in lib/streams.ts
+                are what every visitor plays, and these boxes are used only when that file is empty.
               </CardDescription>
             </CardHeader>
             <CardContent>

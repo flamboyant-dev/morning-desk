@@ -12,6 +12,7 @@ import {
   writeDriveJson,
 } from "@/lib/drive";
 import { env, isGitHubActions, isVercel } from "@/lib/env";
+import { STREAM_1, STREAM_2 } from "@/lib/streams";
 import { telegramConfigured } from "@/lib/telegram";
 import { WINDOW_LABEL } from "@/lib/time";
 import {
@@ -84,6 +85,8 @@ export async function loadConfig(
   }
   if (!config.streamUrl) config = normalizeConfig({ ...config, streamUrl: env("STREAM_URL") });
   if (!config.streamUrl2) config = normalizeConfig({ ...config, streamUrl2: env("STREAM_URL_2") });
+  if (STREAM_1.trim()) config = normalizeConfig({ ...config, streamUrl: STREAM_1 });
+  if (STREAM_2.trim()) config = normalizeConfig({ ...config, streamUrl2: STREAM_2 });
   return config;
 }
 
