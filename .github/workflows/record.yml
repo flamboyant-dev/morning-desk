@@ -2,8 +2,9 @@ name: Morning recording
 
 on:
   schedule:
-    # 01:35 UTC is 07:05 IST. The job waits until 07:10, then records 15 minutes.
-    - cron: "35 1 * * *"
+    # 00:05 UTC is 05:35 IST. GitHub's free clock is often late, so the job
+    # starts early and waits on the runner until 07:10 IST.
+    - cron: "5 0 * * *"
   workflow_dispatch:
     inputs:
       seconds:
@@ -21,7 +22,7 @@ permissions:
 jobs:
   record:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

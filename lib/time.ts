@@ -58,23 +58,33 @@ export function recordingStamp(date = new Date()): string {
   return `${read("year")}${read("month")}${read("day")}-${hour}${read("minute")}${read("second")}`;
 }
 
-/** Wait until 7:10 IST when the runner is at most 20 minutes early. */
+const MAX_EARLY_SECONDS = 110 * 60;
+const MAX_LATE_SECONDS = 8 * 60;
+
+/**
+ * Wait until 7:10 IST.
+ * Returns "ready" when recording should start, or "missed" when this run
+ * is too early or already past the window.
+ */
 export async function waitUntilWindow(
   log: (message: string) => void = console.log,
-): Promise<void> {
+): Promise<"ready" | "missed"> {
   const now = istClockSeconds();
   const target = WINDOW_HOUR * 3600 + WINDOW_MINUTE * 60;
   const delta = target - now;
-  if (delta <= 0) {
-    log("It is already 7:10 IST or later, so recording starts now.");
-    return;
+  if (delta > MAX_EARLY_SECONDS) {
+    log("This run is too early for 7:10 IST, so it will not record.");
+    return "missed";
   }
-  if (delta > 20 * 60) {
-    log(
-      "The runner is more than 20 minutes early, so it will not wait overnight. Recording starts now.",
-    );
-    return;
+  if (delta < -MAX_LATE_SECONDS) {
+    log("7:10 IST has already passed, so this run will not record the wrong hour.");
+    return "missed";
   }
-  log(`Waiting ${Math.ceil(delta / 60)} min until 7:10 IST.`);
-  await new Promise((resolve) => setTimeout(resolve, delta * 1000));
+  if (delta > 0) {
+    log(`Waiting ${Math.ceil(delta / 60)} min until 7:10 IST.`);
+    await new Promise((resolve) => setTimeout(resolve, delta * 1000));
+  } else {
+    log("It is 7:10 IST. Recording starts now.");
+  }
+  return "ready";
 }

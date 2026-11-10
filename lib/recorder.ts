@@ -434,7 +434,13 @@ export async function record(options: {
     if (!sourceUrl) {
       throw new Error("Add a stream URL in Settings before recording.");
     }
-    if (options.waitForWindow) await waitUntilWindow(log);
+    if (options.waitForWindow) {
+      const gate = await waitUntilWindow(log);
+      if (gate === "missed") {
+        log("No clip was saved for this run.");
+        return { ...recording, status: "ready", error: undefined, durationSec: 0 };
+      }
+    }
     recording.startedAt = new Date().toISOString();
     log("Resolving the m3u8 address.");
     const resolved = await resolveStreamUrl(sourceUrl);

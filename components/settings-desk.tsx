@@ -203,8 +203,8 @@ export function SettingsDesk() {
                 <div className="rounded-lg bg-muted px-3 py-3 text-sm">
                   <p className="font-medium">Every morning, {WINDOW_LABEL}</p>
                   <p className="mt-1 text-muted-foreground">
-                    The runner starts a few minutes early and waits. GitHub&apos;s free clock can
-                    slip by a few minutes, and the desk shows the real start time.
+                    The runner starts around 5:35 AM IST and waits until 7:10. GitHub&apos;s free
+                    clock is often late, and the desk shows the real start time.
                   </p>
                 </div>
                 {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
